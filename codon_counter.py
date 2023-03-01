@@ -10,7 +10,7 @@ plasmid = next(SeqIO.parse("CP037924.1.txt", "embl"))
 def codon_counter(record):
 
     codon_count = {}
-    print(record.id)
+    #print(record.id)
     genome = record.seq
         
     for feature in record.features:
@@ -58,35 +58,40 @@ def synonymus_codon_counts(codon_count_dict, translation_table):
     
     return synonymus
 
+
+def normalized_codon_usage(synonomous_dict):
+    
+    normdict = defaultdict(dict)
+    
+    for aa, codon_dict in synonomous_dict.items():
+        tot = 0
+        for codon, count in codon_dict.items():
+            tot += count
+        for codon, count in codon_dict.items():
+            normdict[aa][str(codon)] = round(count/tot, 2)
+    
+    return normdict
+
 table_11 = CodonTable.unambiguous_rna_by_id[11] #Table 11 Bacterial, Archaeal, Plant Plastid
 bact_table = table_11.forward_table
 for codon in table_11.stop_codons:
     bact_table[str(codon)] = 'STOP'
 
-
-
 chromosome_codons = codon_counter(chromosome)
 plasmid_codons = codon_counter(plasmid)
+
 rel_chromosome = relative_codon_count(chromosome_codons)
 rel_plasmid = relative_codon_count(plasmid_codons)
 
-chromosome_synonymus = synonymus_codon_counts(
-plasmid_synonymus = defaultdict(dict)
+chromosome_synonymus = synonymus_codon_counts(chromosome_codons, bact_table)
+plasmid_synonymus = synonymus_codon_counts(plasmid_codons, bact_table)
 
+norm_chromosome = normalized_codon_usage(chromosome_synonymus)
+norm_plasmid = normalized_codon_usage(plasmid_synonymus)
 
+for aa in sorted(norm_chromosome.keys()):
+    print(aa, norm_chromosome[aa])
+    print(aa, norm_plasmid[aa])
 
-usage_chromosome = defaultdict(dict)
-usage_plasmid = defaultdict(dict)
-
-for aa, codon_dict in chromosome_synonymus.items():
-    tot = 0
-    for codon, count in codon_dict.items():
-        tot += count
-    for codon, count in codon_dict.items():
-        usage_chromosome[aa][codon] = count/tot
-
-for aa in sorted(usage_chromosome.keys()):
-    print(aa, usage_chromosome[aa], usage_plasmid[aa])        
-    
 
     
