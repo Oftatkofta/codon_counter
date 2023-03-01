@@ -70,18 +70,22 @@ def normalized_codon_usage(synonomous_dict):
     return normdict
 
 
-def make_protein_codon_dict(record, codon):
+def count_aa_occurences(aa, peptide_sequence):
+    
+    return peptide_sequence.count(aa)
+    
+
+def make_protein_codon_dict(record, codon, translation_table=11):
     #returns a dict[protein_id]:(total_count_syn_codons, count_specic_codon)
     out = dict()
-    
-    genome = record.seq
-        
+    table = CodonTable.unambiguous_rna_by_id[translation_table] 
+    aa = 
     for feature in record.features:
         
         if (feature.type == "CDS") and not (feature.qualifiers.get('pseudo', False)):
-            prot_id = feature.qualifiers['protein_id']
-            translation = feature.qualifiers['translation']
-            sequence = feature.extract(genome)
+            prot_id = feature.qualifiers['protein_id'][0]
+            translation = str(feature.qualifiers['translation'])
+            sequence = feature.extract(record.seq)
             
             transcription = sequence.transcribe()
         
