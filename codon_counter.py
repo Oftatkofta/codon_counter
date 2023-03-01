@@ -3,9 +3,6 @@ from Bio.Data import CodonTable
 from collections import defaultdict 
 
 
-chromosome =  next(SeqIO.parse("CP037923.1.txt", "embl"))
-plasmid = next(SeqIO.parse("CP037924.1.txt", "embl"))
-
 
 def codon_counter(record):
 
@@ -72,26 +69,55 @@ def normalized_codon_usage(synonomous_dict):
     
     return normdict
 
-table_11 = CodonTable.unambiguous_rna_by_id[11] #Table 11 Bacterial, Archaeal, Plant Plastid
-bact_table = table_11.forward_table
-for codon in table_11.stop_codons:
-    bact_table[str(codon)] = 'STOP'
 
-chromosome_codons = codon_counter(chromosome)
-plasmid_codons = codon_counter(plasmid)
+def make_protein_codon_dict(record, codon):
+    #returns a dict[protein_id]:(total_count_syn_codons, count_specic_codon)
+    out = dict()
+    
+    genome = record.seq
+        
+    for feature in record.features:
+        
+        if (feature.type == "CDS") and not (feature.qualifiers.get('pseudo', False)):
+            prot_id = feature.qualifiers['protein_id']
+            translation = feature.qualifiers['translation']
+            sequence = feature.extract(genome)
+            
+            transcription = sequence.transcribe()
+        
+            for codon in range(0, len(transcription), 3):
+                codon_seq = transcription[codon:codon+3]
+                if codon_seq in codon_count:
+                    codon_count[codon_seq] += 1
+                else:
+                    codon_count[codon_seq] = 1
+    return out
+    
 
-rel_chromosome = relative_codon_count(chromosome_codons)
-rel_plasmid = relative_codon_count(plasmid_codons)
+if __name__ == "__main__":
 
-chromosome_synonymus = synonymus_codon_counts(chromosome_codons, bact_table)
-plasmid_synonymus = synonymus_codon_counts(plasmid_codons, bact_table)
+    chromosome =  next(SeqIO.parse("CP037923.1.txt", "embl"))
+    plasmid = next(SeqIO.parse("CP037924.1.txt", "embl"))
+    
+    table_11 = CodonTable.unambiguous_rna_by_id[11] #Table 11 Bacterial, Archaeal, Plant Plastid
+    bact_table = table_11.forward_table
+    for codon in table_11.stop_codons:
+        bact_table[str(codon)] = 'STOP'
+    chromosome_codons = codon_counter(chromosome)
+    plasmid_codons = codon_counter(plasmid)
 
-norm_chromosome = normalized_codon_usage(chromosome_synonymus)
-norm_plasmid = normalized_codon_usage(plasmid_synonymus)
+    rel_chromosome = relative_codon_count(chromosome_codons)
+    rel_plasmid = relative_codon_count(plasmid_codons)
 
-for aa in sorted(norm_chromosome.keys()):
-    print(aa, norm_chromosome[aa])
-    print(aa, norm_plasmid[aa])
+    chromosome_synonymus = synonymus_codon_counts(chromosome_codons, bact_table)
+    plasmid_synonymus = synonymus_codon_counts(plasmid_codons, bact_table)
+
+    norm_chromosome = normalized_codon_usage(chromosome_synonymus)
+    norm_plasmid = normalized_codon_usage(plasmid_synonymus)
+
+    for aa in sorted(norm_chromosome.keys()):
+        print(aa, norm_chromosome[aa])
+        print(aa, norm_plasmid[aa])
 
 
     
