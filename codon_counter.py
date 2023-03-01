@@ -77,24 +77,25 @@ def count_aa_occurences(aa, peptide_sequence):
 
 def make_protein_codon_dict(record, codon, translation_table=11):
     #returns a dict[protein_id]:(total_count_syn_codons, count_specic_codon)
-    out = dict()
+    out = {}
     table = CodonTable.unambiguous_rna_by_id[translation_table] 
-    aa = 
+    aa = table.forward_table[codon]
+    
     for feature in record.features:
         
         if (feature.type == "CDS") and not (feature.qualifiers.get('pseudo', False)):
+            codon_count = 0
             prot_id = feature.qualifiers['protein_id'][0]
-            translation = str(feature.qualifiers['translation'])
+            translation = feature.qualifiers['translation'][0]
+            aa_count = translation.count(aa)
             sequence = feature.extract(record.seq)
-            
             transcription = sequence.transcribe()
         
-            for codon in range(0, len(transcription), 3):
-                codon_seq = transcription[codon:codon+3]
-                if codon_seq in codon_count:
-                    codon_count[codon_seq] += 1
-                else:
-                    codon_count[codon_seq] = 1
+            for cdn in range(0, len(transcription), 3):
+                cdn_seq = transcription[cdn:cdn+3]
+                if cdn_seq == codon: 
+                    codon_count += 1
+            out[prot_id] = (aa_count, codon_count)
     return out
     
 
