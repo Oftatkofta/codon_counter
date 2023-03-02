@@ -76,7 +76,7 @@ def count_aa_occurences(aa, peptide_sequence):
     
 
 def make_protein_codon_dict(record, codon, translation_table=11):
-    #returns a dict[protein_id]:(total_count_syn_codons, count_specic_codon)
+    #returns a dict[protein_id]:(total_count_syn_codons, count_specic_codon, fraction )
     out = {}
     table = CodonTable.unambiguous_rna_by_id[translation_table] 
     aa = table.forward_table[codon]
@@ -95,7 +95,60 @@ def make_protein_codon_dict(record, codon, translation_table=11):
                 cdn_seq = transcription[cdn:cdn+3]
                 if cdn_seq == codon: 
                     codon_count += 1
-            out[prot_id] = (aa_count, codon_count)
+            
+            if aa_count != 0:
+                fraction = codon_count/aa_count
+            else:
+                fraction = 0
+                
+            out[prot_id] = (aa_count, codon_count, fraction)
+    return out
+ 
+def make_aa_dict(record, codon, translation_table=11):
+    #returns a dict[protein_id]:total_count_syn_codons
+    out = {}
+    table = CodonTable.unambiguous_rna_by_id[translation_table] 
+    aa = table.forward_table[codon]
+    
+    for feature in record.features:
+        
+        if (feature.type == "CDS") and not (feature.qualifiers.get('pseudo', False)):
+            prot_id = feature.qualifiers['protein_id'][0]
+            translation = feature.qualifiers['translation'][0]
+            aa_count = translation.count(aa)
+
+            out[prot_id] = aa_count
+    return out
+ 
+def make_codon_dict(record, codon, translation_table=11):
+    #returns a dict[protein_id]: count_specic_codon
+    out = {}
+    table = CodonTable.unambiguous_rna_by_id[translation_table] 
+    aa = table.forward_table[codon]
+    
+    for feature in record.features:
+        
+        if (feature.type == "CDS") and not (feature.qualifiers.get('pseudo', False)):
+            codon_count = 0
+            prot_id = feature.qualifiers['protein_id'][0]
+            sequence = feature.extract(record.seq)
+            transcription = sequence.transcribe()
+        
+            for cdn in range(0, len(transcription), 3):
+                cdn_seq = transcription[cdn:cdn+3]
+                if cdn_seq == codon: 
+                    codon_count += 1
+
+            out[prot_id] = codon_count
+    return out
+ 
+def make_source_dict(record, source):
+    out = {}
+    for feature in record.features:
+        
+        if (feature.type == "CDS") and not (feature.qualifiers.get('pseudo', False)):
+            prot_id = feature.qualifiers['protein_id'][0]
+            out[prot_id] = source
     return out
     
 
