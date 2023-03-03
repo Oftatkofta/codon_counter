@@ -5,7 +5,7 @@ from collections import defaultdict
 
 
 def codon_counter(record):
-
+    #counts occurances of triplets in record non-pseudodene CDS
     codon_count = {}
     #print(record.id)
     genome = record.seq
@@ -44,11 +44,12 @@ def relative_codon_count(codon_count_dict):
     return codon_frequency
  
 
-def synonymus_codon_counts(codon_count_dict, translation_table):
+def synonymus_codon_counts(codon_count_dict, translation_table=11):
     synonymus = defaultdict(dict)
+    table = CodonTable.unambiguous_rna_by_id[translation_table] 
     
     for codon, count in sorted(codon_count_dict.items()):
-        aa = translation_table[codon]
+        aa = table[codon]
         cnt = synonymus[aa]
         cnt[codon] = count
         synonymus[aa] = cnt
@@ -151,6 +152,8 @@ def make_source_dict(record, source):
             out[prot_id] = source
     return out
     
+def print_codon_usage(codon_count_dict)
+
 
 if __name__ == "__main__":
 
